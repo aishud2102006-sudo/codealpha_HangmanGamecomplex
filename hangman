@@ -16,7 +16,7 @@ CATEGORIES = {
     }
 }
 
-# ASCII art stages for hangman
+# ASCII art stages for Hangman
 HANGMAN_PICS = [
     """
        ------
@@ -83,111 +83,186 @@ HANGMAN_PICS = [
     """
 ]
 
-def display_game_status(attempts_left, max_attempts, guessed_correct, guessed_wrong, display_word):
-    # Map remaining attempts to the correct ASCII stage index
+
+def display_game_status(attempts_left, max_attempts,
+                        guessed_correct, guessed_wrong, display_word):
+    # Display the correct Hangman stage
     pic_index = max_attempts - attempts_left
-    print(HANGMAN_PICS[min(pic_index, len(HANGMAN_PICS) - 1)])
-    print(f"\nWord: {display_word}")
-    print(f"Correct Guesses: {', '.join(sorted(guessed_correct)) if guessed_correct else 'None'}")
-    print(f"Wrong Guesses: {', '.join(sorted(guessed_wrong)) if guessed_wrong else 'None'}")
+    pic_index = max(0, min(pic_index, len(HANGMAN_PICS) - 1))
+
+    print(HANGMAN_PICS[pic_index])
+    print(f"Word: {display_word}")
+
+    print("Correct Guesses:",
+          ", ".join(sorted(guessed_correct))
+          if guessed_correct else "None")
+
+    print("Wrong Guesses:",
+          ", ".join(sorted(guessed_wrong))
+          if guessed_wrong else "None")
+
     print(f"Attempts Left: {attempts_left}")
 
+
 def play_hangman():
+    print("\n========================================")
+    print("       WELCOME TO ADVANCED HANGMAN")
     print("========================================")
-    print("      WELCOME TO ADVANCED HANGMAN       ")
-    print("========================================")
-    
-    # Category Selection
-    print("Select a Category:")
+
+    # Category selection
+    print("\nSelect a Category:")
+
     categories = list(CATEGORIES.keys())
+
     for idx, cat in enumerate(categories, 1):
-        print(f"  {idx}. {cat.capitalize()} ({len(CATEGORIES[cat]['words']} words)")
-    
+        print(
+            f"  {idx}. {cat.capitalize()} "
+            f"({len(CATEGORIES[cat]['words'])} words)"
+        )
+
     while True:
         try:
             choice = int(input("Enter category number (1-3): "))
+
             if 1 <= choice <= len(categories):
                 selected_category = categories[choice - 1]
                 break
+
             print("Invalid selection. Choose a number from the list.")
+
         except ValueError:
             print("Please enter a valid integer.")
 
+    # Initialize the game
     word_data = CATEGORIES[selected_category]
     word = random.choice(word_data["words"])
     max_attempts = word_data["attempts"]
     attempts = max_attempts
-    
+
     guessed_correct = set()
     guessed_wrong = set()
-    hints_remaining = 1  # Give the player 1 hint opportunity
+    hints_remaining = 1
 
+    # Main game loop
     while attempts > 0:
-        # Build the current display word
-        display = " ".join([letter if letter in guessed_correct else "_" for letter in word])
-        
-        print("\n" + "~" * 40)
-        display_game_status(attempts, max_attempts, guessed_correct, guessed_wrong, display)
 
-        # Check for win condition
+        # Build the displayed word
+        display = " ".join(
+            letter if letter in guessed_correct else "_"
+            for letter in word
+        )
+
+        print("\n" + "~" * 40)
+
+        display_game_status(
+            attempts,
+            max_attempts,
+            guessed_correct,
+            guessed_wrong,
+            display
+        )
+
+        # Check whether the player has won
         if all(letter in guessed_correct for letter in word):
-            print("\n🎉 CONGRATULATIONS! You successfully guessed the word!")
+            print("\nCONGRATULATIONS! You guessed the word!")
             print(f"The word was: {word.upper()}")
             return
 
-        print(f"\nOptions: Type a letter, type 'hint' ({hints_remaining} left), or 'quit'.")
+        print(
+            f"\nOptions: Type a letter, 'hint' "
+            f"({hints_remaining} left), or 'quit'."
+        )
+
         guess = input("Your input: ").lower().strip()
 
+        # Quit the game
         if guess == "quit":
             print("\nGame exited. Thanks for playing!")
-            print(f"The hidden word was: {word}")
+            print(f"The hidden word was: {word.upper()}")
             return
 
+        # Use a hint
         if guess == "hint":
             if hints_remaining > 0:
-                # Find letters in word that haven't been guessed yet
-                unguarded_letters = [l for l in word if l not in guessed_correct]
-                if unguarded_letters:
-                    hint_letter = random.choice(unguarded_letters)
+                unguessed_letters = [
+                    letter for letter in word
+                    if letter not in guessed_correct
+                ]
+
+                if unguessed_letters:
+                    hint_letter = random.choice(unguessed_letters)
                     guessed_correct.add(hint_letter)
                     hints_remaining -= 1
-                    attempts -= 1  # Penalty for using a hint
-                    print(f"\n💡 HINT REVEALED: The letter '{hint_letter}' is in the word! (Penalty: -1 attempt)")
+                    attempts -= 1
+
+                    print(
+                        f"\nHINT REVEALED: The letter "
+                        f"'{hint_letter}' is in the word!"
+                    )
+                    print("Penalty: -1 attempt")
+
                 else:
-                    print("\nNo hints needed, you already found all letters!")
+                    print("\nYou already found all the letters!")
+
             else:
-                print("\n❌ You have already used your hint!")
+                print("\nYou have already used your hint!")
+
             continue
 
-        # Validate standard letter input
+        # Validate letter input
         if len(guess) != 1 or not guess.isalpha():
-            print("\n⚠️ Invalid input. Please enter a single alphabetical character.")
+            print(
+                "\nInvalid input. Enter a single alphabetical letter."
+            )
             continue
 
+        # Check for repeated guesses
         if guess in guessed_correct or guess in guessed_wrong:
-            print(f"\n⚠️ You already guessed the letter '{guess}'. Try a different one.")
+            print(
+                f"\nYou already guessed '{guess}'. "
+                "Try a different letter."
+            )
             continue
 
         # Process the guess
         if guess in word:
             guessed_correct.add(guess)
-            print(f"\n✅ Good job! '{guess}' is in the word.")
+            print(f"\nGood job! '{guess}' is in the word.")
+
         else:
             guessed_wrong.add(guess)
             attempts -= 1
-            print(f"\n❌ Oops! '{guess}' is not in the word.")
+            print(f"\nOops! '{guess}' is not in the word.")
 
-    # Game over handling
+    # Final word display and game-over message
+    display = " ".join(
+        letter if letter in guessed_correct else "_"
+        for letter in word
+    )
+
     print("\n" + "=" * 40)
-    print(HANGMAN_PICS[-1])
+    display_game_status(
+        0,
+        max_attempts,
+        guessed_correct,
+        guessed_wrong,
+        display
+    )
     print("GAME OVER! You ran out of attempts.")
     print(f"The secret word was: {word.upper()}")
     print("=" * 40)
 
-if _name_ == "_main_":
+
+# Main program
+if __name__ == "__main__":
     while True:
         play_hangman()
-        replay = input("\nWould you like to play again? (y/n): ").lower().strip()
-        if replay != 'y':
-            print("Thanks for playing! Goodbye.")
+
+        replay = input(
+            "\nWould you like to play again? (y/n): "
+        ).lower().strip()
+
+        if replay != "y":
+            print("\nThanks for playing! Goodbye.")
             break
+
